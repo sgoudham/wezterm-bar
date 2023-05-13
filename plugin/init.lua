@@ -282,7 +282,7 @@ wezterm.on(
     -- start and end hardcoded numbers are the Powerline + " " padding
     local fillerwidth = 2 + string.len(index) + string.len(pane_count) + 2
 
-    local tabtitle = tab.active_pane.title
+    local tabtitle = tab.active_pane.foreground_process_name:find("ssh") and "(ssh)" .. tab.active_pane.title or tab.active_pane.title
     local width = conf.tab_max_width - fillerwidth - 1
     if (#tabtitle + fillerwidth) > conf.tab_max_width then
       tabtitle = wezterm.truncate_right(tabtitle, width) .. "…"
