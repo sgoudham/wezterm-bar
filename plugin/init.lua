@@ -29,6 +29,9 @@ local config = {
       active = { "", ":" },
       inactive = { "", ":" },
     },
+    titles = {
+      ssh = "🔑",
+    },
   },
   clock = {
     enabled = true,
@@ -111,6 +114,7 @@ M.apply_to_config = function(c, opts)
       active = config.tabs.brackets.active,
       inactive = config.tabs.brackets.inactive,
     },
+    titles = config.tabs.titles,
   }
 
   C.clock = {
@@ -282,7 +286,38 @@ wezterm.on(
     -- start and end hardcoded numbers are the Powerline + " " padding
     local fillerwidth = 2 + string.len(index) + string.len(pane_count) + 2
 
-    local tabtitle = tab.active_pane.title
+    local pane = tab.active_pane
+
+    local tab_prefix_ssh = ""
+    if pane.foreground_process_name:find("ssh") then
+      tab_prefix_ssh = C.tabs.titles.ssh .. " "
+    end
+
+    local function getUsername(name, ssh_domains)
+      for _, t in ipairs(ssh_domains) do
+        if name:find(t.name) then
+          return t.username
+        end
+      end
+      return "" -- Name not found
+    end
+
+    local tab_prefix_wezterm_ssh = ""
+    if pane.domain_name ~= nil and pane.domain_name:find("SSH") then
+      local host = pane.domain_name:gsub(".*:", "") or ""
+      local username = getUsername(host, conf.ssh_domains())
+      tab_prefix_wezterm_ssh = C.tabs.titles.ssh
+        .. " "
+        .. username
+        .. "@"
+        .. host
+        .. " "
+    end
+
+    local tabtitle = pane.domain_name == "local"
+        and tab_prefix_ssh .. pane.title
+      or (tab_prefix_wezterm_ssh .. pane.title)
+
     local width = conf.tab_max_width - fillerwidth - 1
     if (#tabtitle + fillerwidth) > conf.tab_max_width then
       tabtitle = wezterm.truncate_right(tabtitle, width) .. "…"
